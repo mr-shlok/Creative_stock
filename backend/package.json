@@ -1,0 +1,14 @@
+{
+  "name": "creative-stock-backend",
+  "version": "1.0.0",
+  "description": "Backend for Creative Stock application",
+  "main": "app.py",
+  "scripts": {
+    "start": "python app.py",
+    "dev": "python app.py",
+    "install": "pip install -r requirements.txt"
+  },
+  "keywords": ["python", "flask", "api"],
+  "author": "Creative Stock",
+  "license": "MIT"
+}
