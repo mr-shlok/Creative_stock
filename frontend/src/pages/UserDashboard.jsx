@@ -1,9 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import PinCard from '../components/PinCard';
+import { pinApi } from '../utils/api';
 import confetti from 'canvas-confetti';
 
 const UserDashboard = () => {
+    const [pins, setPins] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         // Trigger confetti on successful login/mount
         const duration = 3 * 1000;
@@ -25,6 +30,19 @@ const UserDashboard = () => {
             confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
         }, 250);
 
+        const fetchPins = async () => {
+            try {
+                const data = await pinApi.getPins();
+                setPins(data);
+            } catch (error) {
+                console.error("Failed to fetch pins", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPins();
+
         return () => clearInterval(interval);
     }, []);
 
@@ -40,14 +58,24 @@ const UserDashboard = () => {
                         <p className="text-gray-500 font-medium">Welcome back! Here's what's new today.</p>
                     </header>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {/* Placeholder for dynamic content/GridFeed */}
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                            <div key={i} className="aspect-square bg-white rounded-3xl shadow-sm border border-gray-100 animate-pulse flex items-center justify-center text-gray-200">
-                                <span className="font-bold text-lg">Pin {i}</span>
-                            </div>
-                        ))}
-                    </div>
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                                <div key={i} className="aspect-square bg-white rounded-3xl shadow-sm border border-gray-100 animate-pulse flex items-center justify-center text-gray-200" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {pins.map((pin) => (
+                                <PinCard key={pin.id} pin={pin} />
+                            ))}
+                            {pins.length === 0 && (
+                                <div className="col-span-full py-20 text-center">
+                                    <p className="text-gray-400 text-xl font-medium">No creations found yet.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

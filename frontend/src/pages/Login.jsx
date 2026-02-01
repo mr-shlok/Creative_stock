@@ -12,15 +12,36 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
 
-        if (error) {
-            toast.error(error.message);
+        if (authError) {
+            toast.error(authError.message);
+            setLoading(false);
+            return;
+        }
+
+        // Fetch user profile to check role
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', authData.user.id)
+            .single();
+
+        if (profileError) {
+            toast.error(`DB Error: ${profileError.message} (${profileError.code})`);
+            console.error('Full Profile Error:', JSON.stringify(profileError, null, 2));
+            setLoading(false);
+            return;
+        }
+
+        toast.success('Login successful!');
+        if (profileData.role === 'admin') {
+            localStorage.setItem('isAdminLoggedIn', 'true');
+            navigate('/admin');
         } else {
-            toast.success('Login successful!');
             navigate('/dashboard');
         }
         setLoading(false);
