@@ -16,14 +16,17 @@ const GridFeed = () => {
         setPins(data);
         setLoading(false);
 
-        // Trigger GSAP animations for all pins
-        gsap.from(".waterfall-item", {
-          opacity: 0,
-          y: 50,
-          stagger: 0.1,
-          duration: 0.8,
-          ease: "power3.out"
-        });
+        // Trigger GSAP animations for all pins with a slight delay to ensure DOM is ready
+        setTimeout(() => {
+          gsap.from(".waterfall-item", {
+            opacity: 0,
+            y: 50,
+            stagger: 0.1,
+            duration: 0.8,
+            ease: "power3.out",
+            clearProps: "all" // Clean up inline styles after animation
+          });
+        }, 100);
       } catch (error) {
         console.error('Error fetching pins:', error);
         setLoading(false);
