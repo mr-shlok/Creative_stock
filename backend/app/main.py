@@ -43,14 +43,15 @@ supabase: Client = create_client(url, key)
 # Pydantic Models
 class PinBase(BaseModel):
     title: str
-    image: str
-    user: str
+    image_url: str
+    user_id: str
 
 class PinCreate(PinBase):
     pass
 
 class Pin(PinBase):
     id: int
+    created_at: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -70,12 +71,20 @@ def get_pins():
 
 @app.post("/pins", response_model=dict)
 def create_pin(pin: PinCreate):
-    response = supabase.table("pins").insert(pin.model_dump()).execute()
-    if not response.data:
-        raise HTTPException(status_code=400, detail="Could not create pin")
-    return response.data[0]
+    try:
+        response = supabase.table("pins").insert(pin.model_dump()).execute()
+        if not response.data:
+            raise HTTPException(status_code=400, detail="Could not create pin")
+        return response.data[0]
+    except Exception as e:
+        print(f"Error creating pin: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/pins/{pin_id}")
 def delete_pin(pin_id: int):
-    response = supabase.table("pins").delete().eq("id", pin_id).execute()
-    return {"message": "Pin deleted"}
+    try:
+        response = supabase.table("pins").delete().eq("id", pin_id).execute()
+        return {"message": "Pin deleted"}
+    except Exception as e:
+        print(f"Error deleting pin: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

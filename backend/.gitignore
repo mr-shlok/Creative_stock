@@ -3,6 +3,7 @@ env
 package-lock.json   
 node_modules
 node_modules/
+Supabase-sql/admin.sql
 
 # Logs
 logs

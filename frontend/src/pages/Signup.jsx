@@ -12,14 +12,19 @@ const Signup = () => {
     const handleSignup = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const { error } = await supabase.auth.signUp({
+
+        console.log("Attempting signup for:", email);
+
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
         });
 
         if (error) {
+            console.error("Signup Error:", error);
             toast.error(error.message);
         } else {
+            console.log("Signup successful:", data);
             toast.success('A 6-digit verification code has been sent to your email.');
             navigate('/verify-otp', { state: { email } });
         }

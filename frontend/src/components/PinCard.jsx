@@ -47,7 +47,7 @@ const PinCard = ({ pin }) => {
         onMouseLeave={handleMouseLeave}
       >
         <img
-          src={pin.image?.startsWith('http') ? pin.image : `${BASE_URL}${pin.image || ''}`}
+          src={(pin.image_url || pin.image || '').startsWith('http') ? (pin.image_url || pin.image) : `${BASE_URL}${pin.image_url || pin.image || ''}`}
           alt={pin.title}
           className="w-full h-auto object-cover"
           loading="lazy"

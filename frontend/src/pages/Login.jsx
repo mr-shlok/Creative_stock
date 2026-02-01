@@ -12,33 +12,50 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
+        console.log('Attempting login for:', email);
+
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
 
         if (authError) {
+            console.error('Auth Error:', authError);
             toast.error(authError.message);
             setLoading(false);
             return;
         }
 
+        console.log('Auth successful, fetching profile for ID:', authData.user.id);
+
         // Fetch user profile to check role
+        // Removed .single() temporarily to debug if multiple rows or array structure is causing issues
         const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('role')
-            .eq('id', authData.user.id)
-            .single();
+            .select('*') // Changing to * to see what we actually get
+            .eq('id', authData.user.id);
 
         if (profileError) {
-            toast.error(`DB Error: ${profileError.message} (${profileError.code})`);
-            console.error('Full Profile Error:', JSON.stringify(profileError, null, 2));
+            console.error('Profile Fetch Error:', profileError);
+            toast.error(`DB Error: ${profileError.message}`);
             setLoading(false);
             return;
         }
 
+        console.log('Profile Data received:', profileData);
+
+        if (!profileData || profileData.length === 0) {
+            console.error('No profile found for user');
+            toast.error('Profile not found.');
+            setLoading(false);
+            return;
+        }
+
+        const userProfile = profileData[0];
+        console.log('User Role:', userProfile.role);
+
         toast.success('Login successful!');
-        if (profileData.role === 'admin') {
+        if (userProfile.role === 'admin') {
             localStorage.setItem('isAdminLoggedIn', 'true');
             navigate('/admin');
         } else {
