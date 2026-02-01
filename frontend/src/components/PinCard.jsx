@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
+import { Heart, Download, Share2 } from 'lucide-react';
 
 const BASE_URL = '';
 
@@ -8,13 +9,17 @@ const PinCard = ({ pin }) => {
   const cardRef = useRef(null);
 
   useEffect(() => {
-    if (cardRef.current) {
-      gsap.fromTo(
-        cardRef.current,
-        { opacity: 0.6, y: 24, scale: 0.98 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" }
-      );
-    }
+    const ctx = gsap.context(() => {
+      if (cardRef.current) {
+        gsap.fromTo(
+          cardRef.current,
+          { opacity: 0.6, y: 24, scale: 0.98 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" }
+        );
+      }
+    }, cardRef); // Scope to cardRef
+
+    return () => ctx.revert();
   }, []);
 
   const handleMouseEnter = () => {
@@ -54,21 +59,15 @@ const PinCard = ({ pin }) => {
           <div className="flex items-center justify-between mt-2">
             <div className="flex space-x-2">
               <button className="bg-white bg-opacity-20 backdrop-blur-sm rounded-full p-2 hover:bg-opacity-30 transition-all">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                <Heart className="w-4 h-4 text-white" />
               </button>
 
               <button className="bg-white bg-opacity-20 backdrop-blur-sm rounded-full p-2 hover:bg-opacity-30 transition-all">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
+                <Download className="w-4 h-4 text-white" />
               </button>
 
               <button className="bg-white bg-opacity-20 backdrop-blur-sm rounded-full p-2 hover:bg-opacity-30 transition-all">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                </svg>
+                <Share2 className="w-4 h-4 text-white" />
               </button>
             </div>
 
