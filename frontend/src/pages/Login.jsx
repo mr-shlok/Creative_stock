@@ -29,36 +29,27 @@ const Login = () => {
         console.log('Auth successful, fetching profile for ID:', authData.user.id);
 
         // Fetch user profile to check role
-        // Removed .single() temporarily to debug if multiple rows or array structure is causing issues
         const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('*') // Changing to * to see what we actually get
-            .eq('id', authData.user.id);
+            .select('role')
+            .eq('id', authData.user.id)
+            .single();
 
         if (profileError) {
             console.error('Profile Fetch Error:', profileError);
-            toast.error(`DB Error: ${profileError.message}`);
+            toast.error(`Database Error: Profile not found. Please contact support.`);
             setLoading(false);
             return;
         }
 
-        console.log('Profile Data received:', profileData);
-
-        if (!profileData || profileData.length === 0) {
-            console.error('No profile found for user');
-            toast.error('Profile not found.');
-            setLoading(false);
-            return;
-        }
-
-        const userProfile = profileData[0];
-        console.log('User Role:', userProfile.role);
+        console.log('User Role:', profileData.role);
 
         toast.success('Login successful!');
-        if (userProfile.role === 'admin') {
+        if (profileData.role === 'admin') {
             localStorage.setItem('isAdminLoggedIn', 'true');
             navigate('/admin');
         } else {
+            localStorage.removeItem('isAdminLoggedIn'); // Ensure old admin state is cleared
             navigate('/dashboard');
         }
         setLoading(false);
