@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { supabase } from '../supabaseClient';
 
 const API_URL = 'http://localhost:8000';
 
@@ -54,14 +55,31 @@ export const categoryApi = {
 
 export const uploadApi = {
     uploadImage: async (file) => {
-        // In a real app, this would upload to Supabase Storage and return the URL.
-        // For now, we'll just fake it as per the existing logic OR we could implement real upload.
-        // Keeping it simple as requested for connection first.
-        console.log('uploadImage', file);
-        return {
-            url: URL.createObjectURL(file),
-            originalUrl: URL.createObjectURL(file)
-        };
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            const { error: uploadError, data } = await supabase.storage
+                .from('photos')
+                .upload(filePath, file);
+
+            if (uploadError) {
+                throw uploadError;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('photos')
+                .getPublicUrl(filePath);
+
+            return {
+                url: publicUrl,
+                originalUrl: publicUrl
+            };
+        } catch (error) {
+            console.error('Upload error:', error);
+            throw error;
+        }
     }
 };
 

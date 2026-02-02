@@ -12,15 +12,44 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log('Attempting login for:', email);
+
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
 
-        if (error) {
-            toast.error(error.message);
+        if (authError) {
+            console.error('Auth Error:', authError);
+            toast.error(authError.message);
+            setLoading(false);
+            return;
+        }
+
+        console.log('Auth successful, fetching profile for ID:', authData.user.id);
+
+        // Fetch user profile to check role
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', authData.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('Profile Fetch Error:', profileError);
+            toast.error(`Database Error: Profile not found. Please contact support.`);
+            setLoading(false);
+            return;
+        }
+
+        console.log('User Role:', profileData.role);
+
+        toast.success('Login successful!');
+        if (profileData.role === 'admin') {
+            localStorage.setItem('isAdminLoggedIn', 'true');
+            navigate('/admin');
         } else {
-            toast.success('Login successful!');
+            localStorage.removeItem('isAdminLoggedIn'); // Ensure old admin state is cleared
             navigate('/dashboard');
         }
         setLoading(false);
