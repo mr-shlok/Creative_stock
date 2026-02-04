@@ -8,4 +8,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Missing Supabase URL or Anon Key');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+    },
+    db: {
+        schema: 'public'
+    },
+    global: {
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    }
+});

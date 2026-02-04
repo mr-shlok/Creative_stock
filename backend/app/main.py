@@ -33,58 +33,70 @@ app.add_middleware(
 
 # Supabase Setup
 url: str = os.environ.get("SUPABASE_PROJECT_URL")
-key: str = os.environ.get("SUPABASE_SERVICE_KEY") # Use Service key for backend operations if needed, or Anon for public. Service key bypasses RLS, so use carefully.
+# Use Service key for backend operations if available, fallback to Anon key
+service_key: str = os.environ.get("SUPABASE_SERVICE_KEY")
+anon_key: str = os.environ.get("SUPABASE_ANON_KEY")
 
-if not url or not key:
-    print("Warning: SUPABASE_PROJECT_URL or SUPABASE_SERVICE_KEY not found in environment variables.")
+if not url:
+    print("CRITICAL: SUPABASE_PROJECT_URL not found!")
 
-supabase: Client = create_client(url, key)
+# Use service key if available, otherwise anon key
+key = service_key if service_key else anon_key
+
+if not key:
+    print("CRITICAL: Neither SUPABASE_SERVICE_KEY nor SUPABASE_ANON_KEY found!")
+
+try:
+    supabase: Client = create_client(url, key)
+    print(f"Supabase client initialized using {'service_role' if service_key else 'anon'} key.")
+except Exception as e:
+    print(f"Failed to initialize Supabase client: {e}")
+    supabase = None
 
 # Pydantic Models
-class PinBase(BaseModel):
-    title: str
-    image_url: str
+class BoardBase(BaseModel):
+    name: str
     user_id: str
 
-class PinCreate(PinBase):
+class BoardCreate(BoardBase):
     pass
 
-class Pin(PinBase):
-    id: int
+class Board(BoardBase):
+    id: str
     created_at: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
+
+# Helper for Pydantic v1/v2 compatibility
+def get_model_dict(model: BaseModel):
+    return model.model_dump() if hasattr(model, 'model_dump') else model.dict()
 
 @app.get("/")
 def root():
     return {"message": "FastAPI is running 🚀"}
 
-@app.get("/pins", response_model=List[dict])
-def get_pins():
+@app.get("/boards", response_model=List[dict])
+def get_boards(user_id: Optional[str] = None):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase client not initialized")
     try:
-        response = supabase.table("pins").select("*").execute()
+        query = supabase.table("boards").select("*")
+        if user_id:
+            query = query.eq("user_id", user_id)
+        response = query.execute()
         return response.data
     except Exception as e:
-        print(f"Error fetching pins: {e}")
+        print(f"Error fetching boards: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/pins", response_model=dict)
-def create_pin(pin: PinCreate):
+@app.post("/boards", response_model=dict)
+def create_board(board: BoardCreate):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase client not initialized")
     try:
-        response = supabase.table("pins").insert(pin.model_dump()).execute()
+        data = get_model_dict(board)
+        response = supabase.table("boards").insert(data).execute()
         if not response.data:
-            raise HTTPException(status_code=400, detail="Could not create pin")
+            raise HTTPException(status_code=400, detail="Could not create board")
         return response.data[0]
     except Exception as e:
-        print(f"Error creating pin: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/pins/{pin_id}")
-def delete_pin(pin_id: int):
-    try:
-        response = supabase.table("pins").delete().eq("id", pin_id).execute()
-        return {"message": "Pin deleted"}
-    except Exception as e:
-        print(f"Error deleting pin: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error creating board: {e}")
+        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}. Check if user_id is correct and UUID is valid.")

@@ -12,14 +12,16 @@ import {
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { logout } = useAuth();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const menuItems = [
-        { icon: <Home size={24} />, label: 'Home', path: '/dashboard' },
+        { icon: <Home size={24} />, label: 'Overview', path: '/dashboard' },
         { icon: <ShoppingCart size={24} />, label: 'Add to Cart', path: '/cart' },
         { icon: <Layout size={24} />, label: 'Board', path: '/board' },
         { icon: <MessageCircle size={24} />, label: 'Messages', path: '/messages' },
@@ -28,7 +30,7 @@ const Sidebar = () => {
     ];
 
     const handleConfirmLogout = async () => {
-        await supabase.auth.signOut();
+        await logout();
         toast.success("Logged out successfully!");
         setShowLogoutModal(false);
         navigate('/');

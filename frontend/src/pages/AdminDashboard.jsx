@@ -12,12 +12,6 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const adminStatus = localStorage.getItem('isAdminLoggedIn');
-    if (!adminStatus) {
-      navigate('/login');
-      return;
-    }
-
     const fetchPins = async () => {
       try {
         const data = await pinApi.getPins();
@@ -30,7 +24,7 @@ const AdminDashboard = () => {
     };
 
     fetchPins();
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gray-50">

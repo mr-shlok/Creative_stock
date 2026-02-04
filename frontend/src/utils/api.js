@@ -10,31 +10,69 @@ const api = axios.create({
 export const pinApi = {
     getPins: async () => {
         try {
-            const response = await api.get('/pins');
-            return response.data;
+            const { data, error } = await supabase
+                .from('pins')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            return data || [];
         } catch (error) {
             console.error('Error fetching pins:', error);
-            // Return empty array to prevent frontend crash on initial load if backend is down
             return [];
         }
     },
     createPin: async (data) => {
         try {
-            const response = await api.post('/pins', data);
-            return response.data;
+            const { data: result, error } = await supabase
+                .from('pins')
+                .insert([data])
+                .select();
+
+            if (error) throw error;
+            return result[0];
         } catch (error) {
             console.error('Error creating pin:', error);
             throw error;
         }
     },
     updatePin: async (id, data) => {
-        // Not implemented in backend yet, keeping mock for now or implement if needed
-        console.log('updatePin', id, data);
-        return { ...data, id };
-    },
-    deletePin: async (id) => {
         try {
-            await api.delete(`/pins/${id}`);
+            const { data: result, error } = await supabase
+                .from('pins')
+                .update(data)
+                .eq('id', id)
+                .select();
+
+            if (error) throw error;
+            return result[0];
+        } catch (error) {
+            console.error('Error updating pin:', error);
+            throw error;
+        }
+    },
+    searchPins: async (query) => {
+        try {
+            const { data, error } = await supabase
+                .from('pins')
+                .select('*')
+                .or(`title.ilike.%${query}%,tags.cs.{${query}}`);
+
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('Error searching pins:', error);
+            return [];
+        }
+    },
+    deletePin: async (pinId) => {
+        try {
+            const { error } = await supabase
+                .from('pins')
+                .delete()
+                .eq('id', pinId);
+
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error deleting pin:', error);
@@ -50,6 +88,27 @@ export const categoryApi = {
     createCategory: async (data) => {
         console.log('createCategory', data);
         return data;
+    }
+};
+
+export const boardApi = {
+    getBoards: async (userId) => {
+        try {
+            const response = await api.get('/boards', { params: { user_id: userId } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching boards:', error);
+            return [];
+        }
+    },
+    createBoard: async (data) => {
+        try {
+            const response = await api.post('/boards', data);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating board:', error);
+            throw error;
+        }
     }
 };
 
