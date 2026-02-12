@@ -2,6 +2,7 @@ import axios from 'axios';
 import { supabase } from '../supabaseClient';
 
 const API_URL = 'http://localhost:8000';
+export const BASE_URL = '';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -115,29 +116,111 @@ export const boardApi = {
 export const uploadApi = {
     uploadImage: async (file) => {
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `${fileName}`;
+            const formData = new FormData();
+            formData.append('file', file);
 
-            const { error: uploadError, data } = await supabase.storage
-                .from('photos')
-                .upload(filePath, file);
+            const response = await api.post('/upload/image', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
 
-            if (uploadError) {
-                throw uploadError;
-            }
+            const { bucket, watermarked_path, original_path } = response.data;
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('photos')
-                .getPublicUrl(filePath);
+            // Convert storage paths into public URLs using Supabase JS client
+            const { data: watermarkedData } = supabase
+                .storage
+                .from(bucket)
+                .getPublicUrl(watermarked_path);
+
+            const { data: originalData } = supabase
+                .storage
+                .from(bucket)
+                .getPublicUrl(original_path);
 
             return {
-                url: publicUrl,
-                originalUrl: publicUrl
+                url: watermarkedData.publicUrl,
+                originalUrl: originalData.publicUrl,
             };
         } catch (error) {
             console.error('Upload error:', error);
             throw error;
+        }
+    }
+};
+
+export const likeApi = {
+    toggleLike: async (pinId) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await api.post(`/pins/like/${pinId}`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Like error:', error);
+            throw error;
+        }
+    },
+    checkLike: async (pinId) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await api.get(`/pins/likes/${pinId}`, {
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Check like error:', error);
+            return { liked: false };
+        }
+    }
+};
+
+export const cartApi = {
+    addToCart: async (pinId) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await api.post(`/pins/cart/${pinId}`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Add to cart error:', error);
+            throw error;
+        }
+    },
+    removeFromCart: async (pinId) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await api.delete(`/pins/cart/${pinId}`, {
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Remove from cart error:', error);
+            throw error;
+        }
+    },
+    getCartItems: async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await api.get('/pins/cart', {
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Get cart error:', error);
+            return { items: [] };
         }
     }
 };

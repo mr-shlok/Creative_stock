@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
-import PinCard from '../components/PinCard';
+import ImageCard from '../components/ImageCard';
 import { pinApi } from '../utils/api';
 import { toast } from 'react-toastify';
 
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {pins.map((pin) => (
-                <PinCard key={pin.id} pin={pin} />
+                <ImageCard key={pin.id} pin={pin} />
               ))}
               {pins.length === 0 && (
                 <div className="col-span-full py-20 text-center">

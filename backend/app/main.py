@@ -5,6 +5,7 @@ from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
 from typing import List, Optional
+from app.routes import auth, upload, pins
 
 # Load environment variables
 load_dotenv()
@@ -30,6 +31,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include Routers
+app.include_router(auth.router)
+app.include_router(upload.router)
+app.include_router(pins.router)
 
 # Supabase Setup
 url: str = os.environ.get("SUPABASE_PROJECT_URL")
@@ -75,6 +81,13 @@ def root():
 
 @app.get("/boards", response_model=List[dict])
 def get_boards(user_id: Optional[str] = None):
+    """
+    Fetch boards for a user.
+
+    If Supabase is temporarily unreachable (e.g., DNS getaddrinfo failed),
+    we return an empty list instead of a 500 so the UI can degrade
+    gracefully without breaking.
+    """
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase client not initialized")
     try:
@@ -83,6 +96,11 @@ def get_boards(user_id: Optional[str] = None):
             query = query.eq("user_id", user_id)
         response = query.execute()
         return response.data
+    except OSError as e:
+        # Network / DNS resolution error (e.g., [Errno 11001] getaddrinfo failed)
+        print(f"Non-fatal error fetching boards (network/DNS): {e}")
+        # Gracefully degrade by returning no boards
+        return []
     except Exception as e:
         print(f"Error fetching boards: {e}")
         raise HTTPException(status_code=500, detail=str(e))

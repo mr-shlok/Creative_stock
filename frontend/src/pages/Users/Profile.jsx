@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import Header from '../components/Header';
-import Sidebar from '../components/Sidebar';
-import { supabase } from '../supabaseClient';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import { supabase } from '../../supabaseClient';
 import { toast } from 'react-toastify';
 
 const Profile = () => {
@@ -65,19 +65,19 @@ const Profile = () => {
             }
 
             const fileExt = file.name.split('.').pop();
-            const fileName = `avatars/${user.id}_${Date.now()}.${fileExt}`;
-            const filePath = fileName;
+            const fileName = `${user.id}/${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
 
             // Upload to Supabase Storage
             const { error: uploadError } = await supabase.storage
-                .from('photos')
+                .from('avatars')
                 .upload(filePath, file, { upsert: true });
 
             if (uploadError) throw uploadError;
 
             // Get Public URL
             const { data: { publicUrl } } = supabase.storage
-                .from('photos')
+                .from('avatars')
                 .getPublicUrl(filePath);
 
             setProfile({ ...profile, avatar_url: publicUrl });
